@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="My Diet">
+<meta name="theme-color" content="#2a1a1f">
+<title>My Diet Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6f0;
+    --surface: #fff9f5;
+    --card: #ffffff;
+    --border: #ead9d0;
+    --rose: #c47a85;
+    --mauve: #9b6b7a;
+    --champagne: #d4a574;
+    --blush: #f2d5d0;
+    --sage: #8aab8a;
+    --red: #c05a5a;
+    --text: #2a1a1f;
+    --muted: #9a7a82;
+    --light-text: #c4a8b0;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; background:var(--bg); }
+  body { font-family:'Jost', sans-serif; color:var(--text); display:flex; flex-direction:column; }
+
+  .top-bar {
+    background: linear-gradient(135deg, #2a1a1f 0%, #3d2530 100%);
+    padding: calc(var(--safe-top) + 16px) 22px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; position: relative; overflow: hidden;
+  }
+  .top-bar::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 85% 50%, rgba(196,122,133,0.2) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .top-bar-left h1 { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:600; color:#fdf6f0; letter-spacing:0.5px; line-height:1; }
+  .top-bar-left h1 em { color:#e8b4bc; font-style:italic; font-weight:400; }
+  .top-bar-left p { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(232,180,188,0.6); margin-top:4px; }
+  .cal-pill {
+    background:rgba(196,122,133,0.2); border:1px solid rgba(196,122,133,0.4);
+    color:#e8b4bc; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    padding:5px 12px; border-radius:20px; font-weight:500; white-space:nowrap; position:relative; z-index:1;
+  }
+
+  .tabs {
+    display:flex; background:var(--surface); border-bottom:1px solid var(--border);
+    flex-shrink:0; overflow-x:auto; scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab {
+    flex:1; min-width:64px; padding:11px 5px; text-align:center;
+    font-size:9.5px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--light-text); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.25s; white-space:nowrap;
+  }
+  .tab.active { color:var(--rose); border-bottom-color:var(--rose); }
+
+  .scroll-area { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--safe-bottom) + 82px); }
+
+  .page { display:none; padding:16px 16px 0; animation:softIn 0.3s ease; }
+  .page.active { display:block; }
+  @keyframes softIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+  /* MACRO ROW */
+  .macro-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .macro-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px 8px; text-align:center; box-shadow:0 2px 8px rgba(42,26,31,0.05);
+  }
+  .mc-icon { font-size:20px; margin-bottom:5px; }
+  .mc-num { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:700; color:var(--rose); line-height:1; }
+  .mc-unit { font-size:10px; color:var(--muted); }
+  .mc-label { font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--light-text); margin-top:4px; font-weight:600; }
+  .mc-note { font-size:10px; color:var(--muted); margin-top:4px; font-style:italic; line-height:1.3; }
+
+  /* CALLOUT */
+  .callout {
+    background:var(--card); border:1px solid var(--border);
+    border-left:3px solid var(--rose); border-radius:0 10px 10px 0;
+    padding:13px 15px; margin-bottom:12px; font-size:13px; line-height:1.55;
+    box-shadow:0 2px 8px rgba(42,26,31,0.04);
+  }
+  .callout strong { color:var(--rose); }
+  .callout.green { border-left-color:var(--sage); }
+  .callout.green strong { color:var(--sage); }
+  .callout.red { border-left-color:var(--red); }
+  .callout.red strong { color:var(--red); }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size:9px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase;
+    color:var(--light-text); margin:14px 0 8px 2px;
+  }
+
+  /* MEAL BLOCKS */
+  .meal-block {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    margin-bottom:8px; overflow:hidden; box-shadow:0 2px 10px rgba(42,26,31,0.05);
+  }
+  .meal-block-header {
+    padding:13px 15px; display:flex; align-items:center; justify-content:space-between;
+    cursor:pointer; user-select:none;
+  }
+  .meal-block-header h3 { font-size:15px; font-weight:600; color:var(--text); }
+  .meal-block-header .cal { font-size:11px; color:var(--rose); font-weight:600; }
+  .chevron { font-size:10px; color:var(--light-text); transition:transform 0.25s; }
+  .meal-block.open .chevron { transform:rotate(180deg); }
+  .meal-block-body { display:none; border-top:1px solid var(--blush); }
+  .meal-block.open .meal-block-body { display:block; }
+
+  .meal-option { padding:11px 15px; border-bottom:1px solid rgba(234,217,208,0.5); font-size:13px; }
+  .meal-option:last-child { border-bottom:none; }
+  .meal-option strong { display:block; color:var(--text); margin-bottom:2px; font-weight:600; }
+  .meal-option span { font-size:11.5px; color:var(--muted); line-height:1.4; }
+  .badge {
+    display:inline-block; font-size:8px; font-weight:700; letter-spacing:1.5px;
+    text-transform:uppercase; padding:2px 6px; border-radius:4px; margin-left:5px; vertical-align:middle;
+  }
+  .badge-easy { background:rgba(138,171,138,0.2); color:var(--sage); }
+  .badge-fav { background:rgba(196,122,133,0.15); color:var(--rose); }
+
+  /* RECIPES */
+  .recipe-card {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    margin-bottom:10px; overflow:hidden; box-shadow:0 2px 10px rgba(42,26,31,0.05);
+  }
+  .recipe-header {
+    padding:14px 15px; display:flex; justify-content:space-between; align-items:flex-start;
+    cursor:pointer; user-select:none;
+  }
+  .recipe-header h3 { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:600; line-height:1.2; color:var(--text); }
+  .recipe-meta { display:flex; gap:5px; margin-top:5px; flex-wrap:wrap; }
+  .rmeta {
+    font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--muted);
+    background:var(--bg); padding:2px 7px; border-radius:3px; border:1px solid var(--border); font-weight:500;
+  }
+  .rmeta.hl { color:var(--rose); border-color:rgba(196,122,133,0.3); }
+  .recipe-emoji { font-size:28px; flex-shrink:0; }
+  .recipe-card-body { display:none; border-top:1px solid var(--blush); }
+  .recipe-card.open .recipe-card-body { display:block; }
+  .recipe-card.open .chevron { transform:rotate(180deg); }
+
+  .ingredients {
+    padding:10px 15px; display:flex; flex-wrap:wrap; gap:5px;
+    border-bottom:1px solid var(--blush); background:var(--surface);
+  }
+  .ing {
+    font-size:11px; background:var(--card); border:1px solid var(--border);
+    padding:3px 9px; border-radius:14px; color:var(--muted);
+  }
+  .step {
+    display:flex; gap:10px; padding:9px 15px;
+    border-bottom:1px solid rgba(234,217,208,0.4); font-size:13px; line-height:1.4;
+  }
+  .step:last-child { border-bottom:none; }
+  .step-n {
+    font-family:'Cormorant Garamond',serif; font-size:17px; color:var(--rose);
+    opacity:0.5; flex-shrink:0; width:18px;
+  }
+
+  /* COKE */
+  .coke-stat {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; margin-bottom:8px; display:flex; align-items:center; gap:12px;
+    box-shadow:0 2px 8px rgba(42,26,31,0.05);
+  }
+  .coke-stat .cs-icon { font-size:28px; flex-shrink:0; }
+  .cs-num { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:700; color:var(--text); }
+  .cs-num.red { color:var(--red); }
+  .cs-label { font-size:11.5px; color:var(--muted); margin-top:2px; }
+
+  /* GROCERY */
+  .grocery-cat {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:14px 15px; margin-bottom:8px; box-shadow:0 2px 8px rgba(42,26,31,0.04);
+  }
+  .grocery-cat h4 {
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--rose); margin-bottom:10px; font-weight:600;
+  }
+  .grocery-cat ul { list-style:none; }
+  .grocery-cat ul li {
+    font-size:13px; padding:6px 0; border-bottom:1px solid rgba(234,217,208,0.5);
+    display:flex; gap:8px; align-items:center; color:var(--text);
+  }
+  .grocery-cat ul li:last-child { border-bottom:none; }
+  .grocery-cat ul li::before { content:'✦'; color:var(--rose); font-size:8px; flex-shrink:0; }
+
+  /* SAMPLE DAY TABLE */
+  .day-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .day-table th {
+    font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--light-text);
+    padding:8px 13px; text-align:left; background:var(--surface); border-bottom:1px solid var(--border); font-weight:600;
+  }
+  .day-table td { padding:10px 13px; border-bottom:1px solid rgba(234,217,208,0.5); vertical-align:top; }
+  .day-table tr:last-child td { border-bottom:none; }
+  .day-table td:first-child { color:var(--rose); font-weight:600; white-space:nowrap; font-size:11px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(253,246,240,0.95); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-top:1px solid var(--border); display:flex; padding-bottom:var(--safe-bottom); z-index:20;
+  }
+  .bnav-item {
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    padding:10px 4px 12px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--light-text); cursor:pointer; gap:4px; transition:color 0.2s; font-weight:600;
+  }
+  .bnav-item.active { color:var(--rose); }
+  .bnav-icon { font-size:18px; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-left">
+    <h1>Eat <em>Well</em></h1>
+    <p>Your nutrition guide</p>
+  </div>
+  <div class="cal-pill">~1,750 cal ✦</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('meals')">Meals</div>
+  <div class="tab" onclick="showTab('recipes')">Recipes</div>
+  <div class="tab" onclick="showTab('coke')">🥤 Coke</div>
+  <div class="tab" onclick="showTab('grocery')">Grocery</div>
+  <div class="tab" onclick="showTab('sample')">Sample Day</div>
+</div>
+
+<div class="scroll-area">
+
+  <!-- MEALS -->
+  <div class="page active" id="tab-meals">
+    <div class="macro-row">
+      <div class="macro-card">
+        <div class="mc-icon">🥩</div>
+        <div class="mc-num">120–130<span class="mc-unit">g</span></div>
+        <div class="mc-label">Protein</div>
+        <div class="mc-note">Protects your muscle</div>
+      </div>
+      <div class="macro-card">
+        <div class="mc-icon">🍚</div>
+        <div class="mc-num">150–180<span class="mc-unit">g</span></div>
+        <div class="mc-label">Carbs</div>
+        <div class="mc-note">Around workouts</div>
+      </div>
+      <div class="macro-card">
+        <div class="mc-icon">🥑</div>
+        <div class="mc-num">55–65<span class="mc-unit">g</span></div>
+        <div class="mc-label">Fat</div>
+        <div class="mc-note">Don't cut too low</div>
+      </div>
+    </div>
+
+    <div class="callout green">
+      <strong>Arepas stay! 🫓</strong> Arepa + egg + cheese is a solid, balanced start to your day. Add a second egg or side Greek yogurt for more protein. On 2-breve days, keep it to 1 arepa + 1 egg + lite cheese.
+    </div>
+
+    <div class="section-label">☀️ Breakfast</div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>Your Go-To Breakfast</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">~350–500 cal</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Arepa + 2 eggs + cheese <span class="badge badge-fav">Your Fave</span></strong><span>~28g protein · the perfect base</span></div>
+        <div class="meal-option"><strong>Arepa + 3 scrambled eggs + cheese</strong><span>~36g protein · bump up when you can</span></div>
+        <div class="meal-option"><strong>Arepa + egg + cheese + Greek yogurt (side)</strong><span>~40g protein · best combo for toning</span></div>
+        <div class="meal-option"><strong>2-breve days: 1 arepa + 1 egg + lite cheese</strong><span>Keep lighter to balance the breve calories</span></div>
+      </div>
+    </div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>Backup Breakfasts</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">~300–400 cal</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Greek yogurt + banana + almonds <span class="badge badge-easy">5 min</span></strong><span>~25g protein · zero cooking</span></div>
+        <div class="meal-option"><strong>Cottage cheese + fruit + honey</strong><span>~28g protein · no cooking needed</span></div>
+        <div class="meal-option"><strong>2 hard-boiled eggs + toast + avocado</strong><span>~20g protein · prep eggs in Sunday batches</span></div>
+        <div class="meal-option"><strong>Protein shake + banana</strong><span>~30g protein · fastest option on busy days</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">🌤 Lunch</div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>No-Cook Lunches</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">~400–500 cal</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Rotisserie chicken + rice + avocado <span class="badge badge-easy">Zero Cook</span></strong><span>Pull from store, microwave rice. ~45g protein</span></div>
+        <div class="meal-option"><strong>Canned tuna + crackers + avocado</strong><span>Open, mix, eat. ~35g protein · cheap & fast</span></div>
+        <div class="meal-option"><strong>Pre-cooked shrimp + rice + avocado</strong><span>Thaw in water, serve over rice. ~35g protein</span></div>
+        <div class="meal-option"><strong>Greek yogurt bowl + granola + berries</strong><span>Light option for heavy breve days · ~22g protein</span></div>
+      </div>
+    </div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>Easy Cooked Lunches</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">~450–550 cal</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Egg scramble bowl <span class="badge badge-easy">10 min</span></strong><span>3 eggs + black beans + salsa + cheese. One pan.</span></div>
+        <div class="meal-option"><strong>Ground beef rice bowl</strong><span>Cook beef (10 min), taco seasoning, serve over rice. ~45g protein</span></div>
+        <div class="meal-option"><strong>Beef & cheese quesadilla</strong><span>Tortilla + leftover beef + cheese, skillet 3 min per side. ~38g protein</span></div>
+        <div class="meal-option"><strong>Canned salmon + rice + hot sauce</strong><span>Mix and microwave. Surprisingly good. ~40g protein</span></div>
+      </div>
+    </div>
+
+    <div class="section-label">🍎 Snacks</div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>Best Snack Options</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">100–250 cal</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Greek yogurt plain 2% <span class="badge badge-easy">Best Bang</span></strong><span>~17g protein · add honey or berries for taste</span></div>
+        <div class="meal-option"><strong>Cottage cheese + fruit</strong><span>~20g protein · surprisingly filling</span></div>
+        <div class="meal-option"><strong>Hard-boiled eggs × 2</strong><span>~12g protein · prep in batches every Sunday</span></div>
+        <div class="meal-option"><strong>String cheese + apple</strong><span>~8g protein · easiest grab-and-go</span></div>
+        <div class="meal-option"><strong>Protein shake (when behind on protein)</strong><span>~25g · only when needed, not every day</span></div>
+      </div>
+    </div>
+    <div class="meal-block" onclick="toggleMeal(this)">
+      <div class="meal-block-header">
+        <h3>Pre & Post Workout</h3>
+        <div style="display:flex;align-items:center;gap:8px"><span class="cal">Timing</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="meal-block-body">
+        <div class="meal-option"><strong>Pre-workout (1 hr before) 🏋️</strong><span>Banana + peanut butter, or arepa + egg. Carbs = energy for your lift.</span></div>
+        <div class="meal-option"><strong>Post-workout (within 45 min) 💪</strong><span>Greek yogurt + fruit, chicken + rice, or protein shake + banana.</span></div>
+        <div class="meal-option"><strong>Creatine (optional) 💊</strong><span>5g/day in water, any time. Safe and very effective for strength.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECIPES -->
+  <div class="page" id="tab-recipes">
+
+    <div class="recipe-card" onclick="toggleRecipe(this)">
+      <div class="recipe-header">
+        <div>
+          <h3>Sheet Pan Chicken Thighs</h3>
+          <div class="recipe-meta"><span class="rmeta hl">~42g protein</span><span class="rmeta">20 min</span><span class="rmeta">1 pan</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px"><span class="recipe-emoji">🍗</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="recipe-card-body">
+        <div class="ingredients">
+          <span class="ing">Chicken thighs</span><span class="ing">Olive oil</span><span class="ing">Garlic powder</span><span class="ing">Paprika</span><span class="ing">Salt & pepper</span><span class="ing">Any veggie</span>
+        </div>
+        <div class="step"><div class="step-n">1</div><div>Preheat oven to 425°F. Toss chicken with olive oil, garlic powder, paprika, salt & pepper.</div></div>
+        <div class="step"><div class="step-n">2</div><div>Throw any veggie on the same pan — broccoli, bell pepper, zucchini, whatever you have.</div></div>
+        <div class="step"><div class="step-n">3</div><div>Bake 20–22 min. Juices run clear = done. Serve with rice or straight from the pan.</div></div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleRecipe(this)">
+      <div class="recipe-header">
+        <div>
+          <h3>Ground Beef Taco Bowl</h3>
+          <div class="recipe-meta"><span class="rmeta hl">~45g protein</span><span class="rmeta">15 min</span><span class="rmeta">1 skillet</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px"><span class="recipe-emoji">🌮</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="recipe-card-body">
+        <div class="ingredients">
+          <span class="ing">Ground beef (90% lean)</span><span class="ing">Taco seasoning</span><span class="ing">Microwavable rice</span><span class="ing">Black beans</span><span class="ing">Salsa</span><span class="ing">Cheese</span>
+        </div>
+        <div class="step"><div class="step-n">1</div><div>Cook ground beef in a skillet, breaking it up. About 8–10 min. Drain excess fat.</div></div>
+        <div class="step"><div class="step-n">2</div><div>Add a taco seasoning packet + splash of water. Stir 1 min.</div></div>
+        <div class="step"><div class="step-n">3</div><div>Serve over microwaved rice with black beans, salsa, and cheese. That's it.</div></div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleRecipe(this)">
+      <div class="recipe-header">
+        <div>
+          <h3>Salmon with Rice & Veggies</h3>
+          <div class="recipe-meta"><span class="rmeta hl">~48g protein</span><span class="rmeta">15 min</span><span class="rmeta">Pan or oven</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px"><span class="recipe-emoji">🐟</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="recipe-card-body">
+        <div class="ingredients">
+          <span class="ing">Salmon fillet</span><span class="ing">Soy sauce</span><span class="ing">Garlic powder</span><span class="ing">Lemon</span><span class="ing">Microwavable rice</span><span class="ing">Frozen veggies</span>
+        </div>
+        <div class="step"><div class="step-n">1</div><div>Season salmon with soy sauce, garlic powder, and a squeeze of lemon.</div></div>
+        <div class="step"><div class="step-n">2</div><div>Pan: cook medium-high 4 min each side. Oven: 400°F for 12–14 min.</div></div>
+        <div class="step"><div class="step-n">3</div><div>Microwave a rice pack and frozen veggie bag while it cooks. Done.</div></div>
+      </div>
+    </div>
+
+    <div class="recipe-card" onclick="toggleRecipe(this)">
+      <div class="recipe-header">
+        <div>
+          <h3>Egg & Bean Skillet</h3>
+          <div class="recipe-meta"><span class="rmeta hl">~35g protein</span><span class="rmeta">10 min</span><span class="rmeta">Budget ✓</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px"><span class="recipe-emoji">🍳</span><span class="chevron">▼</span></div>
+      </div>
+      <div class="recipe-card-body">
+        <div class="ingredients">
+          <span class="ing">4 eggs</span><span class="ing">Black beans (can)</span><span class="ing">Onion powder</span><span class="ing">Cumin</span><span class="ing">Cheese</span><span class="ing">Hot sauce</span>
+        </div>
+        <div class="step"><div class="step-n">1</div><div>Warm drained black beans in a skillet with onion powder and cumin. 2–3 min.</div></div>
+        <div class="step"><div class="step-n">2</div><div>Crack 4 eggs right over the beans. Cover and cook 3–4 min.</div></div>
+        <div class="step"><div class="step-n">3</div><div>Top with cheese and hot sauce. Eat straight from the pan — no judgment.</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COKE -->
+  <div class="page" id="tab-coke">
+    <div class="callout red">
+      <strong>The honest truth:</strong> 3 regular Cokes/day = ~420 liquid calories with 0g protein. You said you're bringing it down to 2 — that's already a meaningful win. Here's what the numbers actually look like.
+    </div>
+    <div class="coke-stat">
+      <div class="cs-icon">🥤</div>
+      <div><div class="cs-num">140 <span style="font-size:13px;color:var(--muted)">cal each</span></div><div class="cs-label">1 regular Coke · 39g sugar · 0g protein</div></div>
+    </div>
+    <div class="coke-stat">
+      <div class="cs-icon">🥤🥤</div>
+      <div><div class="cs-num">280 <span style="font-size:13px;color:var(--muted)">cal/day</span></div><div class="cs-label">2 Cokes — your current target ✓ workable</div></div>
+    </div>
+    <div class="coke-stat">
+      <div class="cs-icon">🥤🥤🥤</div>
+      <div><div class="cs-num red">420 <span style="font-size:13px;color:var(--muted)">cal/day</span></div><div class="cs-label">3 Cokes — leaves very little room for food</div></div>
+    </div>
+
+    <div class="section-label">How to handle 2 Cokes</div>
+    <div class="meal-block open">
+      <div class="meal-block-body" style="display:block">
+        <div class="meal-option"><strong>Log them first thing in the morning</strong><span>Add your 2 Cokes (280 cal) to MyFitnessPal at the start of the day so you know exactly what's left.</span></div>
+        <div class="meal-option"><strong>Pair with meals, not randomly</strong><span>A Coke with lunch and one with dinner feels much more satisfying than drinking between meals.</span></div>
+        <div class="meal-option"><strong>Keep food tight on Coke days</strong><span>Your food target becomes ~1,450–1,500 cal after accounting for the 2 Cokes.</span></div>
+        <div class="meal-option"><strong>Coke Zero for just one of them? 🎯</strong><span>Even swapping ONE saves 140 cal/day = ~1,000 cal/week. Totally optional — your call.</span></div>
+        <div class="meal-option"><strong>Sparkling water as backup</strong><span>Topo Chico or Bubly gives the carbonation hit without the sugar. Great between Cokes.</span></div>
+      </div>
+    </div>
+
+    <div class="callout green" style="margin-top:12px">
+      <strong>Bottom line:</strong> 2 Cokes a day is totally manageable. Stay on your protein, keep meals lean, and you will absolutely hit your August 24 goal.
+    </div>
+  </div>
+
+  <!-- GROCERY -->
+  <div class="page" id="tab-grocery">
+    <div class="grocery-cat">
+      <h4>🥩 Protein</h4>
+      <ul>
+        <li>Chicken thighs or breasts</li>
+        <li>Ground beef (90% lean)</li>
+        <li>Salmon fillets</li>
+        <li>Eggs (dozen+)</li>
+        <li>Canned tuna or salmon</li>
+        <li>Frozen cooked shrimp</li>
+      </ul>
+    </div>
+    <div class="grocery-cat">
+      <h4>🥛 Dairy</h4>
+      <ul>
+        <li>Greek yogurt (plain 2%)</li>
+        <li>Cottage cheese</li>
+        <li>Shredded cheese (any)</li>
+        <li>String cheese</li>
+      </ul>
+    </div>
+    <div class="grocery-cat">
+      <h4>🍚 Carbs</h4>
+      <ul>
+        <li>Arepa dough or pre-made arepas</li>
+        <li>Microwavable rice packs</li>
+        <li>Black beans (canned)</li>
+        <li>Tortillas (flour or corn)</li>
+        <li>Bananas, apples, berries</li>
+        <li>Crackers or bread</li>
+      </ul>
+    </div>
+    <div class="grocery-cat">
+      <h4>🥦 Produce</h4>
+      <ul>
+        <li>Avocados</li>
+        <li>Frozen veggie bags</li>
+        <li>Broccoli or zucchini</li>
+        <li>Bell peppers</li>
+        <li>Spinach</li>
+        <li>Lemons</li>
+      </ul>
+    </div>
+    <div class="grocery-cat">
+      <h4>🧂 Pantry</h4>
+      <ul>
+        <li>Olive oil</li>
+        <li>Taco seasoning packets</li>
+        <li>Garlic powder + paprika</li>
+        <li>Soy sauce</li>
+        <li>Salsa (jar)</li>
+        <li>Hot sauce</li>
+        <li>Peanut butter</li>
+        <li>Honey</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SAMPLE DAY -->
+  <div class="page" id="tab-sample">
+    <div class="callout">
+      <strong>Workout day example</strong> — adjust timing to fit your schedule. Total: ~155g protein · ~1,760 cal (includes 2 Cokes).
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 8px rgba(42,26,31,0.05)">
+      <table class="day-table">
+        <tr><th>Time</th><th>Meal</th><th>Protein</th></tr>
+        <tr><td>8 AM</td><td>Arepa + 2 eggs + cheese + breve ☕</td><td>~30g</td></tr>
+        <tr><td>11 AM</td><td>Greek yogurt + banana</td><td>~17g</td></tr>
+        <tr><td>12 PM</td><td>🏋️ Workout</td><td>—</td></tr>
+        <tr><td>1:30 PM</td><td>Ground beef taco bowl + Coke 🥤</td><td>~45g</td></tr>
+        <tr><td>4 PM</td><td>String cheese + apple</td><td>~8g</td></tr>
+        <tr><td>7 PM</td><td>Sheet pan chicken + rice + veggies + Coke 🥤</td><td>~42g</td></tr>
+        <tr><td>9 PM</td><td>Cottage cheese (if still hungry)</td><td>~14g</td></tr>
+      </table>
+    </div>
+
+    <div class="section-label">The rules that actually matter</div>
+    <div class="meal-block open">
+      <div class="meal-block-body" style="display:block">
+        <div class="meal-option"><strong>🥇 Protein first, always</strong><span>Every meal, ask yourself: where's my protein? This is the single most important habit.</span></div>
+        <div class="meal-option"><strong>🍽️ Don't skip meals</strong><span>Skipping backfires — you get ravenous, overeat later, and lose muscle instead of fat.</span></div>
+        <div class="meal-option"><strong>💧 80–100 oz water daily</strong><span>More on lift days. Hydration directly improves performance and reduces cravings.</span></div>
+        <div class="meal-option"><strong>🛒 30 min Sunday prep</strong><span>Boil eggs, cook rice, portion snacks. Your whole week gets dramatically easier.</span></div>
+        <div class="meal-option"><strong>🎉 The 80/20 rule</strong><span>On plan 80% of the time. The other 20% — enjoy your life. Consistency beats perfection.</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="bnav-item active" id="bnav-meals" onclick="showBottom('meals')">
+    <div class="bnav-icon">🍽️</div><span>Meals</span>
+  </div>
+  <div class="bnav-item" id="bnav-recipes" onclick="showBottom('recipes')">
+    <div class="bnav-icon">👩‍🍳</div><span>Recipes</span>
+  </div>
+  <div class="bnav-item" id="bnav-coke" onclick="showBottom('coke')">
+    <div class="bnav-icon">🥤</div><span>Coke</span>
+  </div>
+  <div class="bnav-item" id="bnav-grocery" onclick="showBottom('grocery')">
+    <div class="bnav-icon">🛒</div><span>Grocery</span>
+  </div>
+  <div class="bnav-item" id="bnav-sample" onclick="showBottom('sample')">
+    <div class="bnav-icon">📋</div><span>Sample</span>
+  </div>
+</div>
+
+<script>
+  const tabMap = { meals:'tab-meals', recipes:'tab-recipes', coke:'tab-coke', grocery:'tab-grocery', sample:'tab-sample' };
+
+  function showBottom(key) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(tabMap[key]).classList.add('active');
+    document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('bnav-'+key).classList.add('active');
+    document.querySelector('.tabs .tab.active')?.classList.remove('active');
+    document.querySelector('.scroll-area').scrollTop = 0;
+  }
+
+  function showTab(key) { showBottom(key); }
+  function toggleMeal(el) { el.classList.toggle('open'); }
+  function toggleRecipe(el) { el.classList.toggle('open'); }
+</script>
+</body>
+</html>
